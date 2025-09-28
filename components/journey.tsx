@@ -1,0 +1,640 @@
+"use client"
+
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { MapPin, Train, Plane, Clock, ArrowRight, BookOpen, Users, Gavel } from "lucide-react"
+import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
+import Link from "next/link"
+
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[600px] bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 rounded-xl flex items-center justify-center border border-amber-200/50 shadow-2xl">
+      <div className="text-amber-800 font-medium">Đang tải bản đồ...</div>
+    </div>
+  ),
+})
+const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false })
+const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false })
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false })
+const Polyline = dynamic(() => import("react-leaflet").then((mod) => mod.Polyline), { ssr: false })
+
+const journeyStops = [
+  {
+    id: 1,
+    location: "Simbirsk (Ulyanovsk)",
+    country: "Đế quốc Nga",
+    period: "1870-1887",
+    description:
+      "Nơi sinh và lớn lên. Cha là thanh tra trường học, mẹ có gốc Đức-Thụy Điển-Do Thái. Lenin học xuất sắc tại Gymnasium, nhận huy chương vàng.",
+    keyEvents: [
+      "22/4/1870: Sinh ra với tên Vladimir Ilyich Ulyanov",
+      "12/1/1886: Cha qua đời",
+      "8/5/1887: Anh trai Alexander bị xử tử vì âm mưu ám sát Sa hoàng",
+    ],
+    icon: MapPin,
+    image: "/simbirsk-russia-1870s-historical-city.jpg",
+    coordinates: [54.3141, 48.3794],
+    category: "childhood",
+  },
+  {
+    id: 2,
+    location: "Kazan",
+    country: "Đế quốc Nga",
+    period: "1887-1888",
+    description:
+      "Nhập học Đại học Kazan nhưng bị đuổi vì tham gia biểu tình sinh viên. Bắt đầu tự học và tiếp xúc với tư tưởng Marxist.",
+    keyEvents: [
+      "1887: Vào Đại học Kazan",
+      "1887: Bị bắt và đuổi học vì biểu tình",
+      "1888-1889: Tự học, đọc Marx và các tài liệu cách mạng",
+    ],
+    icon: BookOpen,
+    image: "/kazan-university-1880s-historical-building.jpg",
+    coordinates: [55.8304, 49.0661],
+    category: "education",
+  },
+  {
+    id: 3,
+    location: "Samara",
+    country: "Đế quốc Nga",
+    period: "1889-1893",
+    description:
+      "Thời gian tự học luật và chuẩn bị thi lấy bằng. Tiếp tục nghiên cứu Marxism và bắt đầu hoạt động chính trị.",
+    keyEvents: [
+      "1891: Thi lấy bằng luật với kết quả xuất sắc",
+      "1892: Có giấy phép hành nghề luật sư",
+      "1892: Bào chữa cho người nghèo, thấy rõ bất công xã hội",
+    ],
+    icon: Gavel,
+    image: "/samara-russia-1890s-volga-river.jpg",
+    coordinates: [53.2001, 50.15],
+    category: "education",
+  },
+  {
+    id: 4,
+    location: "Saint Petersburg",
+    country: "Đế quốc Nga",
+    period: "1893-1895",
+    description:
+      "Bắt đầu hoạt động cách mạng nghiêm túc, tham gia các nhóm Marxist, thành lập Liên minh Đấu tranh Giải phóng Giai cấp Công nhân.",
+    keyEvents: [
+      "1893: Chuyển đến St. Petersburg",
+      "1893-1895: Tham gia hoạt động Marxist",
+      "20/12/1895: Bị bắt vì xuất bản báo bất hợp pháp",
+    ],
+    icon: Users,
+    image: "/saint-petersburg-1890s-winter-palace.jpg",
+    coordinates: [59.9311, 30.3351],
+    category: "revolution",
+  },
+  {
+    id: 5,
+    location: "Siberia (Shushenskoye)",
+    country: "Đế quốc Nga",
+    period: "1897-1900",
+    description:
+      "Thời gian lưu đày ở Siberia. Kết hôn với Nadezhda Krupskaya, viết tác phẩm 'Sự phát triển của chủ nghĩa tư bản ở Nga'.",
+    keyEvents: [
+      "1897-1900: Lưu đày tại Shushenskoye",
+      "22/7/1898: Kết hôn với Nadezhda Krupskaya",
+      "1899: Xuất bản 'The Development of Capitalism in Russia'",
+    ],
+    icon: BookOpen,
+    image: "/siberia-exile-village-1890s-snow.jpg",
+    coordinates: [52.2978, 104.2964],
+    category: "exile",
+  },
+  {
+    id: 6,
+    location: "Munich & London",
+    country: "Đức & Anh",
+    period: "1900-1903",
+    description: "Lưu vong ở châu Âu, xuất bản báo Iskra, viết 'What Is to Be Done?', tổ chức Đại hội Đảng lần thứ II.",
+    keyEvents: [
+      "1900: Rời Nga, sang châu Âu",
+      "1901: Bắt đầu dùng bí danh 'Lenin'",
+      "1902: Xuất bản 'What Is To Be Done?'",
+      "1903: Đại hội 2 RSDLP, phân chia Bolshevik-Menshevik",
+    ],
+    icon: Plane,
+    image: "/london-1900s-british-museum-reading-room.jpg",
+    coordinates: [51.5074, -0.1276],
+    category: "exile",
+  },
+  {
+    id: 7,
+    location: "Geneva",
+    country: "Thụy Sĩ",
+    period: "1914-1917",
+    description:
+      "Thời kỳ lưu vong cuối, phát triển lý thuyết về chủ nghĩa đế quốc và chiến tranh. Viết nhiều tác phẩm quan trọng.",
+    keyEvents: [
+      "1905: Tham gia Cách mạng 1905",
+      "1914-1917: Lưu vong tại Geneva",
+      "1916: Viết 'Chủ nghĩa đế quốc là giai đoạn cao nhất của chủ nghĩa tư bản'",
+    ],
+    icon: BookOpen,
+    image: "/geneva-switzerland-1910s-lake-geneva.jpg",
+    coordinates: [46.2044, 6.1432],
+    category: "theory",
+  },
+  {
+    id: 8,
+    location: "Sealed Train Journey",
+    country: "Đức → Nga",
+    period: "Tháng 4/1917",
+    description:
+      "Hành trình lịch sử trở về Nga qua Đức trong toa tàu niêm phong. Đức đồng ý cho Lenin qua để gây bất ổn cho Nga.",
+    keyEvents: [
+      "16/4/1917: Trở về Nga qua toa tàu kín",
+      "Tháng 4/1917: Đưa ra 'Luận cương tháng Tư'",
+      "Kêu gọi 'Tất cả quyền lực về Soviet'",
+    ],
+    icon: Train,
+    image: "/sealed-train-1917-lenin-return-russia.jpg",
+    coordinates: [52.52, 13.405],
+    category: "revolution",
+  },
+  {
+    id: 9,
+    location: "Petrograd (St. Petersburg)",
+    country: "Nga Xô viết",
+    period: "1917-1918",
+    description:
+      "Lãnh đạo Cách mạng Tháng Mười, lật đổ Chính phủ lâm thời, thành lập nhà nước Xô viết đầu tiên trên thế giới.",
+    keyEvents: [
+      "Tháng 10/1917: Cách mạng Tháng Mười",
+      "Bolshevik giành chính quyền",
+      "Lenin trở thành lãnh đạo Nhà nước Xô viết",
+      "30/8/1918: Bị ám sát hụt bởi Fanny Kaplan",
+    ],
+    icon: Users,
+    image: "/petrograd-1917-october-revolution-winter-palace.jpg",
+    coordinates: [59.9311, 30.3351],
+    category: "revolution",
+  },
+  {
+    id: 10,
+    location: "Moscow",
+    country: "Liên Xô",
+    period: "1918-1924",
+    description:
+      "Thủ đô mới của Xô viết. Lenin lãnh đạo đất nước qua Nội chiến, thực hiện NEP, thành lập Liên Xô cho đến khi qua đời.",
+    keyEvents: [
+      "1918: Chuyển thủ đô về Moscow",
+      "1918-1921: Lãnh đạo trong Nội chiến",
+      "1921: Thực hiện Chính sách Kinh tế Mới (NEP)",
+      "1922: Thành lập Liên Xô",
+      "1922-1924: Sức khỏe suy giảm, nhiều lần đột quỵ",
+      "21/1/1924: Qua đời tại Gorki",
+    ],
+    icon: MapPin,
+    image: "/moscow-kremlin-1920s-red-square.jpg",
+    coordinates: [55.7558, 37.6173],
+    category: "leadership",
+  },
+]
+
+const categoryConfig = {
+  childhood: { color: "#8B5CF6", icon: MapPin, label: "Thời thơ ấu" },
+  education: { color: "#06B6D4", icon: BookOpen, label: "Học tập" },
+  revolution: { color: "#EF4444", icon: Users, label: "Cách mạng" },
+  exile: { color: "#F59E0B", icon: Plane, label: "Lưu vong" },
+  theory: { color: "#10B981", icon: BookOpen, label: "Lý thuyết" },
+  leadership: { color: "#8B5CF6", icon: MapPin, label: "Lãnh đạo" },
+}
+
+function LeafletMap({
+  activeStop,
+  onStopSelect,
+}: { activeStop: number | null; onStopSelect: (index: number) => void }) {
+  const [isClient, setIsClient] = useState(false)
+  const [mapError, setMapError] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  if (mapError) {
+    return (
+      <div className="w-full h-[600px] bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 rounded-xl flex items-center justify-center border border-amber-200/50 shadow-2xl">
+        <div className="text-amber-800 font-medium">Không thể tải bản đồ. Vui lòng thử lại.</div>
+      </div>
+    )
+  }
+
+  if (!isClient) {
+    return (
+      <div className="w-full h-[600px] bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 rounded-xl flex items-center justify-center border border-amber-200/50 shadow-2xl">
+        <div className="text-amber-800 font-medium">Đang tải bản đồ hành trình...</div>
+      </div>
+    )
+  }
+
+  const pathCoordinates = journeyStops.map((stop) => stop.coordinates)
+
+  const handleMarkerClick = (index: number) => {
+    console.log("[v0] Marker clicked:", index)
+    if (index >= 0 && index < journeyStops.length) {
+      onStopSelect(index)
+    }
+  }
+
+  return (
+    <div className="relative w-full h-[600px] rounded-xl overflow-hidden border-2 border-amber-200/50 shadow-2xl">
+      <MapContainer
+        center={[55.0, 37.0]}
+        zoom={3}
+        style={{ height: "100%", width: "100%" }}
+        className="leaflet-container vintage-map"
+        whenCreated={() => console.log("[v0] Map created successfully")}
+        onError={() => {
+          console.log("[v0] Map error occurred")
+          setMapError(true)
+        }}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+
+        <Polyline positions={pathCoordinates} color="#8B4513" weight={4} opacity={0.8} dashArray="15, 10" />
+
+        {journeyStops.map((stop, index) => (
+          <Marker
+            key={`marker-${index}`}
+            position={stop.coordinates}
+            eventHandlers={{
+              click: () => handleMarkerClick(index),
+            }}
+          >
+            <Popup>
+              <div className="p-3 min-w-[250px]">
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                    style={{ backgroundColor: categoryConfig[stop.category as keyof typeof categoryConfig].color }}
+                  >
+                    {stop.id}
+                  </div>
+                  <h3 className="font-bold text-sm">{stop.location}</h3>
+                </div>
+                <p className="text-xs text-gray-600 mb-2">
+                  {stop.country} • {stop.period}
+                </p>
+                <p className="text-xs mb-3">{stop.description}</p>
+                <div className="text-xs">
+                  <strong>Sự kiện chính:</strong>
+                  <ul className="mt-1 space-y-1">
+                    {stop.keyEvents.slice(0, 2).map((event, i) => (
+                      <li key={i} className="text-xs text-gray-700">
+                        • {event}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+
+      <style jsx global>{`
+        .vintage-map .leaflet-container {
+          background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 50%, #F59E0B 100%) !important;
+          font-family: 'Georgia', serif !important;
+        }
+        .vintage-map .leaflet-tile {
+          filter: sepia(0.3) contrast(1.1) brightness(1.1) hue-rotate(10deg) saturate(0.9);
+          border-radius: 2px;
+        }
+        .vintage-map .leaflet-control-zoom a {
+          background: linear-gradient(135deg, #92400E, #B45309) !important;
+          color: #FEF3C7 !important;
+          border: 2px solid #D97706 !important;
+          border-radius: 8px !important;
+          font-weight: bold !important;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+        }
+        .vintage-map .leaflet-control-attribution {
+          background: rgba(146, 64, 14, 0.9) !important;
+          color: #FEF3C7 !important;
+          border-radius: 8px !important;
+          border: 1px solid #D97706 !important;
+        }
+        .vintage-map .leaflet-popup-content-wrapper {
+          background: linear-gradient(135deg, #FEF3C7, #FDE68A) !important;
+          color: #92400E !important;
+          border-radius: 12px !important;
+          border: 2px solid #D97706 !important;
+          box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
+        }
+        .vintage-map .leaflet-popup-tip {
+          background: #FEF3C7 !important;
+          border: 1px solid #D97706 !important;
+        }
+        .vintage-map .leaflet-marker-icon {
+          filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+        }
+      `}</style>
+
+      <div className="absolute bottom-4 left-4 bg-gradient-to-br from-amber-50 to-orange-100 backdrop-blur-sm rounded-xl p-4 text-xs z-[1000] border-2 border-amber-200/50 shadow-lg">
+        <h4 className="font-bold text-amber-900 mb-3 text-sm">Chú thích hành trình</h4>
+        <div className="space-y-2 mb-3">
+          {Object.entries(categoryConfig).map(([key, config]) => (
+            <div key={key} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: config.color }}></div>
+              <span className="text-amber-800">{config.label}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 pt-2 border-t border-amber-200">
+          <div
+            className="w-6 h-0.5"
+            style={{
+              background:
+                "repeating-linear-gradient(to right, #8B4513 0, #8B4513 15px, transparent 15px, transparent 25px)",
+            }}
+          ></div>
+          <span className="text-amber-800">Đường đi</span>
+        </div>
+      </div>
+
+      <div className="absolute top-4 right-4 bg-gradient-to-br from-amber-50 to-orange-100 backdrop-blur-sm rounded-xl p-4 z-[1000] border-2 border-amber-200/50 shadow-lg">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-amber-900">{journeyStops.length}</div>
+          <div className="text-xs text-amber-700">Điểm dừng</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function Journey() {
+  const [activeStop, setActiveStop] = useState<number | null>(null)
+  const [visibleCards, setVisibleCards] = useState<number[]>([])
+  const [viewMode, setViewMode] = useState<"cards" | "map">("cards")
+
+  const handleStopSelect = (index: number) => {
+    console.log("[v0] Stop selected:", index)
+    if (index >= 0 && index < journeyStops.length) {
+      setActiveStop(index)
+    }
+  }
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const index = Number.parseInt(entry.target.getAttribute("data-index") || "0")
+          if (entry.isIntersecting && !isNaN(index)) {
+            setVisibleCards((prev) => [...prev, index])
+          }
+        })
+      },
+      { threshold: 0.2 },
+    )
+
+    const cards = document.querySelectorAll("[data-journey-card]")
+    cards.forEach((card) => observer.observe(card))
+
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <section
+      id="journey"
+      className="py-20 px-6 bg-gradient-to-br from-amber-50/30 via-background to-orange-50/20 relative overflow-hidden"
+    >
+      <div className="absolute inset-0 opacity-5">
+        <img
+          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-qUHUE0PfwgCtNP8QaiHEp3KpUcP4WU.png"
+          alt="Europe vintage map"
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="text-5xl md:text-6xl font-black mb-6 text-balance bg-gradient-to-r from-amber-800 via-orange-600 to-amber-800 bg-clip-text text-transparent">
+            Hành Trình Cuộc Đời
+          </h2>
+          <p className="text-xl text-muted-foreground text-pretty max-w-2xl mx-auto">
+            54 năm cuộc đời qua 10 điểm dừng quan trọng từ Simbirsk đến Moscow
+          </p>
+
+          <div className="flex justify-center gap-8 mt-8">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-amber-600">10</div>
+              <div className="text-sm text-muted-foreground">Điểm dừng</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-amber-600">54</div>
+              <div className="text-sm text-muted-foreground">Năm cuộc đời</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-amber-600">6</div>
+              <div className="text-sm text-muted-foreground">Quốc gia</div>
+            </div>
+          </div>
+
+          <div className="flex justify-center mt-8">
+            <div className="bg-amber-100/50 p-1 rounded-lg border border-amber-200">
+              <Button
+                variant={viewMode === "cards" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("cards")}
+                className="rounded-md bg-amber-600 hover:bg-amber-700"
+              >
+                Danh sách
+              </Button>
+              <Button
+                variant={viewMode === "map" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("map")}
+                className="rounded-md bg-amber-600 hover:bg-amber-700"
+              >
+                Bản đồ
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {viewMode === "map" ? (
+          <div className="mb-16">
+            <LeafletMap activeStop={activeStop} onStopSelect={handleStopSelect} />
+
+            {activeStop !== null && activeStop < journeyStops.length && (
+              <Card className="mt-8 border-amber-200/50 bg-gradient-to-r from-amber-50 to-orange-50/50">
+                <CardContent className="p-8">
+                  <div className="flex items-start gap-6">
+                    <div className="flex-shrink-0">
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl"
+                        style={{
+                          backgroundColor:
+                            categoryConfig[journeyStops[activeStop].category as keyof typeof categoryConfig].color,
+                        }}
+                      >
+                        {journeyStops[activeStop].id}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-2xl font-bold">{journeyStops[activeStop].location}</h3>
+                        <span
+                          className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                          style={{
+                            backgroundColor:
+                              categoryConfig[journeyStops[activeStop].category as keyof typeof categoryConfig].color,
+                          }}
+                        >
+                          {categoryConfig[journeyStops[activeStop].category as keyof typeof categoryConfig].label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-muted-foreground mb-4">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {journeyStops[activeStop].country}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {journeyStops[activeStop].period}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground leading-relaxed mb-4">
+                        {journeyStops[activeStop].description}
+                      </p>
+
+                      <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                        <h4 className="font-semibold text-amber-900 mb-2">Sự kiện chính:</h4>
+                        <ul className="space-y-1">
+                          {journeyStops[activeStop].keyEvents.map((event, i) => (
+                            <li key={i} className="text-sm text-amber-800">
+                              • {event}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {journeyStops.map((stop, index) => {
+              const isVisible = visibleCards.includes(index)
+              const isActive = activeStop === index
+              const categoryColor = categoryConfig[stop.category as keyof typeof categoryConfig].color
+
+              return (
+                <Card
+                  key={`card-${index}`}
+                  data-journey-card
+                  data-index={index}
+                  className={`group cursor-pointer transition-all duration-700 hover:shadow-2xl hover:shadow-amber-500/20 border-amber-200/50 ${
+                    isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                  } ${isActive ? "ring-2 ring-amber-500 scale-105" : "hover:-translate-y-2"}`}
+                  style={{ transitionDelay: `${index * 0.1}s` }}
+                  onMouseEnter={() => handleStopSelect(index)}
+                  onMouseLeave={() => setActiveStop(null)}
+                >
+                  <div className="relative overflow-hidden rounded-t-lg">
+                    <img
+                      src={`/.jpg?key=4iqdt&height=200&width=300&query=${encodeURIComponent(stop.location + " " + stop.country + " historical architecture vintage sepia")}`}
+                      alt={`${stop.location}, ${stop.country}`}
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
+                      onError={(e) => {
+                        console.log("[v0] Image load error for:", stop.location)
+                        e.currentTarget.src = "/historical-city-vintage.jpg"
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                    <div
+                      className="absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform"
+                      style={{ backgroundColor: categoryColor }}
+                    >
+                      {stop.id}
+                    </div>
+
+                    <div
+                      className="absolute bottom-4 right-4 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-semibold"
+                      style={{ backgroundColor: `${categoryColor}90` }}
+                    >
+                      {stop.period}
+                    </div>
+                  </div>
+
+                  <CardContent className="p-6">
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-xl font-bold text-balance group-hover:text-amber-600 transition-colors">
+                          {stop.location}
+                        </h3>
+                        <span
+                          className="px-2 py-1 rounded-full text-xs font-semibold text-white"
+                          style={{ backgroundColor: categoryColor }}
+                        >
+                          {categoryConfig[stop.category as keyof typeof categoryConfig].label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span>{stop.country}</span>
+                        <Clock className="h-3 w-3 ml-2" />
+                        <span>{stop.period}</span>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground text-pretty mb-4 leading-relaxed">{stop.description}</p>
+
+                    <div className="bg-amber-50 rounded-lg p-3 mb-4 border border-amber-200">
+                      <h4 className="font-semibold text-amber-900 text-xs mb-1">Sự kiện chính:</h4>
+                      <ul className="space-y-1">
+                        {stop.keyEvents.slice(0, 2).map((event, i) => (
+                          <li key={i} className="text-xs text-amber-800">
+                            • {event}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full group-hover:bg-amber-600 group-hover:text-white transition-all duration-300"
+                      asChild
+                    >
+                      <Link
+                        href={`/journey/${stop.location
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]+/g, "-")
+                          .replace(/^-|-$/g, "")}`}
+                      >
+                        Tìm hiểu thêm
+                        <ArrowRight className="ml-2 h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="mt-16 text-center">
+          <div className="inline-flex items-center gap-2 text-sm text-muted-foreground bg-amber-100/50 px-4 py-2 rounded-full border border-amber-200">
+            <div className="w-2 h-2 bg-amber-600 rounded-full animate-pulse" />
+            Hành trình từ cậu bé Simbirsk đến lãnh tụ cách mạng vĩ đại
+            <div className="w-2 h-2 bg-amber-600 rounded-full animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
