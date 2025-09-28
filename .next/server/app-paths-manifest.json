@@ -1,5 +1,4 @@
 {
   "/page": "app/page.js",
-  "/journey/[slug]/page": "app/journey/[slug]/page.js",
-  "/works/[slug]/page": "app/works/[slug]/page.js"
+  "/api/gemini/route": "app/api/gemini/route.js"
 }
