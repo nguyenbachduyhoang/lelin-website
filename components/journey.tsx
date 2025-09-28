@@ -1,24 +1,20 @@
-"use client"
+"use client";
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { MapPin, Train, Plane, Clock, ArrowRight, BookOpen, Users, Gavel } from "lucide-react"
-import { useState, useEffect } from "react"
-import dynamic from "next/dynamic"
-import Link from "next/link"
-
-const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[600px] bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 rounded-xl flex items-center justify-center border border-amber-200/50 shadow-2xl">
-      <div className="text-amber-800 font-medium">Đang tải bản đồ...</div>
-    </div>
-  ),
-})
-const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false })
-const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false })
-const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false })
-const Polyline = dynamic(() => import("react-leaflet").then((mod) => mod.Polyline), { ssr: false })
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  MapPin,
+  Train,
+  Plane,
+  Clock,
+  ArrowRight,
+  BookOpen,
+  Users,
+  Gavel,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import EuropeMap from "./europe-map";
 
 const journeyStops = [
   {
@@ -111,7 +107,8 @@ const journeyStops = [
     location: "Munich & London",
     country: "Đức & Anh",
     period: "1900-1903",
-    description: "Lưu vong ở châu Âu, xuất bản báo Iskra, viết 'What Is to Be Done?', tổ chức Đại hội Đảng lần thứ II.",
+    description:
+      "Lưu vong ở châu Âu, xuất bản báo Iskra, viết 'What Is to Be Done?', tổ chức Đại hội Đảng lần thứ II.",
     keyEvents: [
       "1900: Rời Nga, sang châu Âu",
       "1901: Bắt đầu dùng bí danh 'Lenin'",
@@ -195,7 +192,7 @@ const journeyStops = [
     coordinates: [55.7558, 37.6173],
     category: "leadership",
   },
-]
+];
 
 const categoryConfig = {
   childhood: { color: "#8B5CF6", icon: MapPin, label: "Thời thơ ấu" },
@@ -204,204 +201,33 @@ const categoryConfig = {
   exile: { color: "#F59E0B", icon: Plane, label: "Lưu vong" },
   theory: { color: "#10B981", icon: BookOpen, label: "Lý thuyết" },
   leadership: { color: "#8B5CF6", icon: MapPin, label: "Lãnh đạo" },
-}
-
-function LeafletMap({
-  activeStop,
-  onStopSelect,
-}: { activeStop: number | null; onStopSelect: (index: number) => void }) {
-  const [isClient, setIsClient] = useState(false)
-  const [mapError, setMapError] = useState(false)
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  if (mapError) {
-    return (
-      <div className="w-full h-[600px] bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 rounded-xl flex items-center justify-center border border-amber-200/50 shadow-2xl">
-        <div className="text-amber-800 font-medium">Không thể tải bản đồ. Vui lòng thử lại.</div>
-      </div>
-    )
-  }
-
-  if (!isClient) {
-    return (
-      <div className="w-full h-[600px] bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 rounded-xl flex items-center justify-center border border-amber-200/50 shadow-2xl">
-        <div className="text-amber-800 font-medium">Đang tải bản đồ hành trình...</div>
-      </div>
-    )
-  }
-
-  const pathCoordinates = journeyStops.map((stop) => stop.coordinates)
-
-  const handleMarkerClick = (index: number) => {
-    console.log("[v0] Marker clicked:", index)
-    if (index >= 0 && index < journeyStops.length) {
-      onStopSelect(index)
-    }
-  }
-
-  return (
-    <div className="relative w-full h-[600px] rounded-xl overflow-hidden border-2 border-amber-200/50 shadow-2xl">
-      <MapContainer
-        center={[55.0, 37.0]}
-        zoom={3}
-        style={{ height: "100%", width: "100%" }}
-        className="leaflet-container vintage-map"
-        whenCreated={() => console.log("[v0] Map created successfully")}
-        onError={() => {
-          console.log("[v0] Map error occurred")
-          setMapError(true)
-        }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-
-        <Polyline positions={pathCoordinates} color="#8B4513" weight={4} opacity={0.8} dashArray="15, 10" />
-
-        {journeyStops.map((stop, index) => (
-          <Marker
-            key={`marker-${index}`}
-            position={stop.coordinates}
-            eventHandlers={{
-              click: () => handleMarkerClick(index),
-            }}
-          >
-            <Popup>
-              <div className="p-3 min-w-[250px]">
-                <div className="flex items-center gap-2 mb-2">
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                    style={{ backgroundColor: categoryConfig[stop.category as keyof typeof categoryConfig].color }}
-                  >
-                    {stop.id}
-                  </div>
-                  <h3 className="font-bold text-sm">{stop.location}</h3>
-                </div>
-                <p className="text-xs text-gray-600 mb-2">
-                  {stop.country} • {stop.period}
-                </p>
-                <p className="text-xs mb-3">{stop.description}</p>
-                <div className="text-xs">
-                  <strong>Sự kiện chính:</strong>
-                  <ul className="mt-1 space-y-1">
-                    {stop.keyEvents.slice(0, 2).map((event, i) => (
-                      <li key={i} className="text-xs text-gray-700">
-                        • {event}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-
-      <style jsx global>{`
-        .vintage-map .leaflet-container {
-          background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 50%, #F59E0B 100%) !important;
-          font-family: 'Georgia', serif !important;
-        }
-        .vintage-map .leaflet-tile {
-          filter: sepia(0.3) contrast(1.1) brightness(1.1) hue-rotate(10deg) saturate(0.9);
-          border-radius: 2px;
-        }
-        .vintage-map .leaflet-control-zoom a {
-          background: linear-gradient(135deg, #92400E, #B45309) !important;
-          color: #FEF3C7 !important;
-          border: 2px solid #D97706 !important;
-          border-radius: 8px !important;
-          font-weight: bold !important;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
-        }
-        .vintage-map .leaflet-control-attribution {
-          background: rgba(146, 64, 14, 0.9) !important;
-          color: #FEF3C7 !important;
-          border-radius: 8px !important;
-          border: 1px solid #D97706 !important;
-        }
-        .vintage-map .leaflet-popup-content-wrapper {
-          background: linear-gradient(135deg, #FEF3C7, #FDE68A) !important;
-          color: #92400E !important;
-          border-radius: 12px !important;
-          border: 2px solid #D97706 !important;
-          box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
-        }
-        .vintage-map .leaflet-popup-tip {
-          background: #FEF3C7 !important;
-          border: 1px solid #D97706 !important;
-        }
-        .vintage-map .leaflet-marker-icon {
-          filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
-        }
-      `}</style>
-
-      <div className="absolute bottom-4 left-4 bg-gradient-to-br from-amber-50 to-orange-100 backdrop-blur-sm rounded-xl p-4 text-xs z-[1000] border-2 border-amber-200/50 shadow-lg">
-        <h4 className="font-bold text-amber-900 mb-3 text-sm">Chú thích hành trình</h4>
-        <div className="space-y-2 mb-3">
-          {Object.entries(categoryConfig).map(([key, config]) => (
-            <div key={key} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: config.color }}></div>
-              <span className="text-amber-800">{config.label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center gap-2 pt-2 border-t border-amber-200">
-          <div
-            className="w-6 h-0.5"
-            style={{
-              background:
-                "repeating-linear-gradient(to right, #8B4513 0, #8B4513 15px, transparent 15px, transparent 25px)",
-            }}
-          ></div>
-          <span className="text-amber-800">Đường đi</span>
-        </div>
-      </div>
-
-      <div className="absolute top-4 right-4 bg-gradient-to-br from-amber-50 to-orange-100 backdrop-blur-sm rounded-xl p-4 z-[1000] border-2 border-amber-200/50 shadow-lg">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-amber-900">{journeyStops.length}</div>
-          <div className="text-xs text-amber-700">Điểm dừng</div>
-        </div>
-      </div>
-    </div>
-  )
-}
+};
 
 export function Journey() {
-  const [activeStop, setActiveStop] = useState<number | null>(null)
-  const [visibleCards, setVisibleCards] = useState<number[]>([])
-  const [viewMode, setViewMode] = useState<"cards" | "map">("cards")
-
-  const handleStopSelect = (index: number) => {
-    console.log("[v0] Stop selected:", index)
-    if (index >= 0 && index < journeyStops.length) {
-      setActiveStop(index)
-    }
-  }
+  const [activeStop, setActiveStop] = useState<number | null>(null);
+  const [visibleCards, setVisibleCards] = useState<number[]>([]);
+  const [viewMode, setViewMode] = useState<"cards" | "map">("cards");
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          const index = Number.parseInt(entry.target.getAttribute("data-index") || "0")
+          const index = Number.parseInt(
+            entry.target.getAttribute("data-index") || "0"
+          );
           if (entry.isIntersecting && !isNaN(index)) {
-            setVisibleCards((prev) => [...prev, index])
+            setVisibleCards((prev) => [...prev, index]);
           }
-        })
+        });
       },
-      { threshold: 0.2 },
-    )
+      { threshold: 0.2 }
+    );
 
-    const cards = document.querySelectorAll("[data-journey-card]")
-    cards.forEach((card) => observer.observe(card))
+    const cards = document.querySelectorAll("[data-journey-card]");
+    cards.forEach((card) => observer.observe(card));
 
-    return () => observer.disconnect()
-  }, [])
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section
@@ -464,72 +290,16 @@ export function Journey() {
 
         {viewMode === "map" ? (
           <div className="mb-16">
-            <LeafletMap activeStop={activeStop} onStopSelect={handleStopSelect} />
-
-            {activeStop !== null && activeStop < journeyStops.length && (
-              <Card className="mt-8 border-amber-200/50 bg-gradient-to-r from-amber-50 to-orange-50/50">
-                <CardContent className="p-8">
-                  <div className="flex items-start gap-6">
-                    <div className="flex-shrink-0">
-                      <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl"
-                        style={{
-                          backgroundColor:
-                            categoryConfig[journeyStops[activeStop].category as keyof typeof categoryConfig].color,
-                        }}
-                      >
-                        {journeyStops[activeStop].id}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-2xl font-bold">{journeyStops[activeStop].location}</h3>
-                        <span
-                          className="px-3 py-1 rounded-full text-xs font-semibold text-white"
-                          style={{
-                            backgroundColor:
-                              categoryConfig[journeyStops[activeStop].category as keyof typeof categoryConfig].color,
-                          }}
-                        >
-                          {categoryConfig[journeyStops[activeStop].category as keyof typeof categoryConfig].label}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-muted-foreground mb-4">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {journeyStops[activeStop].country}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {journeyStops[activeStop].period}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground leading-relaxed mb-4">
-                        {journeyStops[activeStop].description}
-                      </p>
-
-                      <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                        <h4 className="font-semibold text-amber-900 mb-2">Sự kiện chính:</h4>
-                        <ul className="space-y-1">
-                          {journeyStops[activeStop].keyEvents.map((event, i) => (
-                            <li key={i} className="text-sm text-amber-800">
-                              • {event}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <EuropeMap />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {journeyStops.map((stop, index) => {
-              const isVisible = visibleCards.includes(index)
-              const isActive = activeStop === index
-              const categoryColor = categoryConfig[stop.category as keyof typeof categoryConfig].color
+              const isVisible = visibleCards.includes(index);
+              const isActive = activeStop === index;
+              const categoryColor =
+                categoryConfig[stop.category as keyof typeof categoryConfig]
+                  .color;
 
               return (
                 <Card
@@ -537,20 +307,29 @@ export function Journey() {
                   data-journey-card
                   data-index={index}
                   className={`group cursor-pointer transition-all duration-700 hover:shadow-2xl hover:shadow-amber-500/20 border-amber-200/50 ${
-                    isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-                  } ${isActive ? "ring-2 ring-amber-500 scale-105" : "hover:-translate-y-2"}`}
+                    isVisible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-8"
+                  } ${
+                    isActive
+                      ? "ring-2 ring-amber-500 scale-105"
+                      : "hover:-translate-y-2"
+                  }`}
                   style={{ transitionDelay: `${index * 0.1}s` }}
-                  onMouseEnter={() => handleStopSelect(index)}
+                  onMouseEnter={() => setActiveStop(index)}
                   onMouseLeave={() => setActiveStop(null)}
                 >
                   <div className="relative overflow-hidden rounded-t-lg">
                     <img
-                      src={`/.jpg?key=4iqdt&height=200&width=300&query=${encodeURIComponent(stop.location + " " + stop.country + " historical architecture vintage sepia")}`}
+                      src={stop.image || "/historical-city-vintage.jpg"}
                       alt={`${stop.location}, ${stop.country}`}
                       className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
                       onError={(e) => {
-                        console.log("[v0] Image load error for:", stop.location)
-                        e.currentTarget.src = "/historical-city-vintage.jpg"
+                        console.log(
+                          "[v0] Image load error for:",
+                          stop.location
+                        );
+                        e.currentTarget.src = "/historical-city-vintage.jpg";
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -580,7 +359,11 @@ export function Journey() {
                           className="px-2 py-1 rounded-full text-xs font-semibold text-white"
                           style={{ backgroundColor: categoryColor }}
                         >
-                          {categoryConfig[stop.category as keyof typeof categoryConfig].label}
+                          {
+                            categoryConfig[
+                              stop.category as keyof typeof categoryConfig
+                            ].label
+                          }
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -591,10 +374,14 @@ export function Journey() {
                       </div>
                     </div>
 
-                    <p className="text-sm text-muted-foreground text-pretty mb-4 leading-relaxed">{stop.description}</p>
+                    <p className="text-sm text-muted-foreground text-pretty mb-4 leading-relaxed">
+                      {stop.description}
+                    </p>
 
                     <div className="bg-amber-50 rounded-lg p-3 mb-4 border border-amber-200">
-                      <h4 className="font-semibold text-amber-900 text-xs mb-1">Sự kiện chính:</h4>
+                      <h4 className="font-semibold text-amber-900 text-xs mb-1">
+                        Sự kiện chính:
+                      </h4>
                       <ul className="space-y-1">
                         {stop.keyEvents.slice(0, 2).map((event, i) => (
                           <li key={i} className="text-xs text-amber-800">
@@ -622,7 +409,7 @@ export function Journey() {
                     </Button>
                   </CardContent>
                 </Card>
-              )
+              );
             })}
           </div>
         )}
@@ -636,5 +423,5 @@ export function Journey() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-// File: D:\KY8\MLN111\lenin-website\app\works\[slug]\page.tsx
+// File: D:\ki_8\MLN\lelin-website\app\works\[slug]\page.tsx
 import * as entry from '../../../../../app/works/[slug]/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
