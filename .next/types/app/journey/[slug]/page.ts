@@ -1,4 +1,4 @@
-// File: D:\ki_8\MLN\lelin-website\app\journey\[slug]\page.tsx
+// File: D:\KY8\MLN111\New folder\lelin-website\app\journey\[slug]\page.tsx
 import * as entry from '../../../../../app/journey/[slug]/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
