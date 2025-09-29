@@ -267,20 +267,34 @@ export function Journey() {
           </div>
 
           <div className="flex justify-center mt-8">
-            <div className="bg-amber-100/50 p-1 rounded-lg border border-amber-200">
+            <div
+              className="inline-flex items-center gap-2 p-1 rounded-full border border-amber-200 bg-white/80 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/50"
+              role="tablist"
+              aria-label="Chuyển chế độ hiển thị"
+            >
               <Button
-                variant={viewMode === "cards" ? "default" : "ghost"}
+                variant="ghost"
                 size="sm"
+                aria-pressed={viewMode === "cards"}
                 onClick={() => setViewMode("cards")}
-                className="rounded-md bg-amber-600 hover:bg-amber-700"
+                className={`${
+                  viewMode === "cards"
+                    ? "bg-amber-600 text-white shadow hover:bg-amber-700"
+                    : "text-amber-700 hover:bg-amber-50"
+                } rounded-full px-4`}
               >
                 Danh sách
               </Button>
               <Button
-                variant={viewMode === "map" ? "default" : "ghost"}
+                variant="ghost"
                 size="sm"
+                aria-pressed={viewMode === "map"}
                 onClick={() => setViewMode("map")}
-                className="rounded-md bg-amber-600 hover:bg-amber-700"
+                className={`${
+                  viewMode === "map"
+                    ? "bg-amber-600 text-white shadow hover:bg-amber-700"
+                    : "text-amber-700 hover:bg-amber-50"
+                } rounded-full px-4`}
               >
                 Bản đồ
               </Button>

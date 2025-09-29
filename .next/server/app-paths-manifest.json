@@ -1,5 +1,10 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js",
+<<<<<<< HEAD
   "/api/gemini/route": "app/api/gemini/route.js"
+=======
+  "/works/[slug]/page": "app/works/[slug]/page.js",
+  "/journey/[slug]/page": "app/journey/[slug]/page.js"
+>>>>>>> 7d8928dbb03e71077cbb20e4c57ba982c5743d1f
 }

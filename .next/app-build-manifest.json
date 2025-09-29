@@ -11,9 +11,25 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
+<<<<<<< HEAD
     "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
+=======
+    "/works/[slug]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/works/[slug]/page.js"
+    ],
+    "/journey/[slug]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/journey/[slug]/page.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+>>>>>>> 7d8928dbb03e71077cbb20e4c57ba982c5743d1f
       "static/chunks/app/_not-found/page.js"
     ]
   }
