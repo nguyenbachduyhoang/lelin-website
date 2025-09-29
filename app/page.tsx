@@ -1,11 +1,11 @@
-import { Hero } from "@/components/hero"
-import { Navigation } from "@/components/navigation"
-import { Timeline } from "@/components/timeline"
-import { Journey } from "@/components/journey"
-import { Works } from "@/components/works"
-import { Legacy } from "@/components/legacy"
-import { Sources } from "@/components/sources"
-
+import { Hero } from "@/components/hero";
+import { Navigation } from "@/components/navigation";
+import { Timeline } from "@/components/timeline";
+import { Journey } from "@/components/journey";
+import { Works } from "@/components/works";
+import { Legacy } from "@/components/legacy";
+import { Sources } from "@/components/sources";
+import ChatWidget from "@/components/ChatWidget";
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
@@ -16,6 +16,7 @@ export default function HomePage() {
       <Works />
       <Legacy />
       <Sources />
+      <ChatWidget />
     </main>
-  )
+  );
 }
